@@ -14,17 +14,16 @@ func main() {
 
 	flag.Parse()
 
-	var rEssays []marinho.RawEssay
+	var rawEssays []marinho.RawEssay
 	var err error
 	if flag.Lookup("fetch").Value.String() == "true" {
 		slog.Info("fetching from website")
-		rEssays, err = marinho.FetchPageHTML()
-		slog.Info("fetched", "pages", len(rEssays))
+		rawEssays, err = marinho.FetchPageHTML()
+		slog.Info("fetched", "pages", len(rawEssays))
 		if err != nil {
 			panic(err)
 		}
 
-		//save the raw result to a json file
 		f, err := os.Create("rawessays.json")
 		if err != nil {
 			panic(err)
@@ -32,7 +31,7 @@ func main() {
 
 		defer f.Close()
 
-		j, err := json.Marshal(rEssays)
+		j, err := json.Marshal(rawEssays)
 		if err != nil {
 			panic(err)
 		}
@@ -43,7 +42,7 @@ func main() {
 		}
 	} else {
 		slog.Info("reading from file")
-		//read the raw data from the json file
+
 		f, err := os.Open("rawessays.json")
 		if err != nil {
 			panic(err)
@@ -51,21 +50,22 @@ func main() {
 
 		defer f.Close()
 
-		rEssays = []marinho.RawEssay{}
-		err = json.NewDecoder(f).Decode(&rEssays)
+		rawEssays = []marinho.RawEssay{}
+		err = json.NewDecoder(f).Decode(&rawEssays)
 		if err != nil {
 			panic(err)
 		}
 	}
 
-	var parsedEssays marinho.Essays
-	for _, rawEssay := range rEssays {
+	var parsedEssaysResult marinho.Essays
+	for _, rawEssay := range rawEssays {
 		slog.Info("parsing", "url", rawEssay.URL)
-		parsedEssays, err = marinho.ParseHTML2Essay(rawEssay.HTML)
+		parsedEssays, err := marinho.ParseHTML2Essay(rawEssay.HTML)
 		if err != nil {
 			slog.Error("error parsing the html", "url", rawEssay.URL, "error", err)
 			continue
 		}
+		parsedEssaysResult = append(parsedEssaysResult, parsedEssays...)
 		slog.Info("parsed", "essays", len(parsedEssays))
 	}
 
@@ -76,7 +76,7 @@ func main() {
 
 	defer f.Close()
 
-	j, err := json.Marshal(parsedEssays)
+	j, err := json.Marshal(parsedEssaysResult)
 	if err != nil {
 		panic(err)
 	}
