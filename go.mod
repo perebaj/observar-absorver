@@ -20,6 +20,7 @@ require (
 	github.com/lib/pq v1.10.9 // indirect
 	github.com/mattn/go-sqlite3 v1.14.17 // indirect
 	github.com/opencontainers/image-spec v1.1.0 // indirect
+	github.com/pgvector/pgvector-go v0.1.1 // indirect
 	github.com/stretchr/testify v1.9.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.47.0 // indirect
 	go.opentelemetry.io/otel/trace v1.22.0 // indirect

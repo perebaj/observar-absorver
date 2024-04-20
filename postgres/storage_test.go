@@ -12,6 +12,7 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"github.com/perebaj/marinho/postgres"
+	"github.com/pgvector/pgvector-go"
 )
 
 // OpenDB create a new database for testing and return a connection to it.
@@ -78,5 +79,29 @@ func TestNewStorage(t *testing.T) {
 	storage := postgres.NewStorage(db)
 	if storage == nil {
 		t.Fatal("storage is nil")
+	}
+
+	e := make([]float32, 1536)
+	err := storage.SaveEssay(postgres.Essay{
+		Title:         "Test",
+		Body:          "Test",
+		BodyEmbedding: pgvector.NewVector(e),
+		Model_name:    "Test",
+	})
+
+	if err != nil {
+		t.Fatalf("error saving essay: %v", err)
+	}
+
+	// test if the essay was saved
+	var count int
+	err = db.Get(&count, "SELECT COUNT(*) FROM essays")
+
+	if err != nil {
+		t.Fatalf("error counting essays: %v", err)
+	}
+
+	if count != 1 {
+		t.Fatalf("expected 1 essay, got %d", count)
 	}
 }
