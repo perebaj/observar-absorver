@@ -1,3 +1,4 @@
+// Package main in the cmd/scraper folder gather the start point of the scraper application
 package main
 
 import (
@@ -29,7 +30,9 @@ func main() {
 			panic(err)
 		}
 
-		defer f.Close()
+		defer func() {
+			_ = f.Close()
+		}()
 
 		j, err := json.Marshal(rawEssays)
 		if err != nil {
@@ -48,7 +51,9 @@ func main() {
 			panic(err)
 		}
 
-		defer f.Close()
+		defer func() {
+			_ = f.Close()
+		}()
 
 		rawEssays = []marinho.RawEssay{}
 		err = json.NewDecoder(f).Decode(&rawEssays)
@@ -74,7 +79,9 @@ func main() {
 		panic(err)
 	}
 
-	defer f.Close()
+	defer func() {
+		_ = f.Close()
+	}()
 
 	j, err := json.Marshal(parsedEssaysResult)
 	if err != nil {

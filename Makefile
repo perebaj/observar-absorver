@@ -1,3 +1,4 @@
+GOLANGCI_LINT_VERSION = v1.57.2
 export POSTGRES_URL=postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
 
 .PHONY: help
@@ -23,3 +24,8 @@ dev/stop: ## Stop the development server
 integration-test: ## Run integration tests
 	@echo "Running integration tests..."
 	@go test -v ./...
+
+.PHONY: lint
+lint: ## Run linter
+	@echo "Running linter..."
+	@go run github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION) run -v

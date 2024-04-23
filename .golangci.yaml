@@ -1,0 +1,12 @@
+linters:
+  enable:
+    - revive
+    - errcheck
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - structcheck
+    - unused
+issues:
+  exclude-use-default: false

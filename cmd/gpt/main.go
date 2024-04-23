@@ -1,3 +1,4 @@
+// Package main in the cmd/gpt folder gather the start point of the GPT application
 package main
 
 import (

@@ -9,6 +9,7 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
+// Essay is a struct that contains the content of the essay blog post
 type Essay struct {
 	Title   string
 	Content string
@@ -16,17 +17,21 @@ type Essay struct {
 	URL     string
 }
 
+// Essays is a collection of Essay
 type Essays []Essay
 
+// RawEssay is a struct that contains the content of the html page
 type RawEssay struct {
 	URL  string
 	HTML string
 }
 
+// RawEssays is a array of RawEssay
 type RawEssays []RawEssay
 
-const seed_url = "https://observareabsorver.blogspot.com/"
+const seedURL = "https://observareabsorver.blogspot.com/"
 
+// ParseHTML2Essay parses the raw html and returns the essays
 func ParseHTML2Essay(rawHTML string) (Essays, error) {
 	//convert the raw html to a goquery document
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(rawHTML))
@@ -35,7 +40,7 @@ func ParseHTML2Essay(rawHTML string) (Essays, error) {
 	}
 
 	var essays Essays
-	doc.Find("div.date-outer").Each(func(i int, s *goquery.Selection) {
+	doc.Find("div.date-outer").Each(func(_ int, s *goquery.Selection) {
 		dateString := s.Find("h2 > span").Text()
 		title := s.Find("h3").Text()
 		url, _ := s.Find("h3 > a").Attr("href")
@@ -53,17 +58,19 @@ func ParseHTML2Essay(rawHTML string) (Essays, error) {
 	return essays, nil
 }
 
+// FetchPageHTML fetches the html content of the page
 func FetchPageHTML() (RawEssays, error) {
 	var rawEssays RawEssays
-	url := seed_url
+	url := seedURL
 	for {
 		slog.Info("fetching", "url", url)
 		res, err := http.Get(url)
 		if err != nil {
 			return nil, fmt.Errorf("error fetching next link: %v", err)
 		}
-
-		defer res.Body.Close()
+		func () {
+			_ = res.Body.Close()
+		}()
 		doc, err := goquery.NewDocumentFromReader(res.Body)
 		if err != nil {
 			return nil, fmt.Errorf("error parsing the html body: %v", err)

@@ -61,8 +61,13 @@ func OpenDB(t *testing.T) *sqlx.DB {
 
 	// after run the tests, drop the database
 	t.Cleanup(func() {
-		testDB.Close()
-		defer db.Close()
+		defer func() {
+			_ = testDB.Close()
+		}()
+
+		defer func() {
+			_ = db.Close()
+		}()
 		_, err = db.Exec(fmt.Sprintf(`DROP DATABASE "%s" WITH (FORCE);`, database))
 		if err != nil {
 			t.Fatalf("error dropping database for test: %v", err)
@@ -74,7 +79,6 @@ func OpenDB(t *testing.T) *sqlx.DB {
 
 func TestNewStorage(t *testing.T) {
 	db := OpenDB(t)
-	defer db.Close()
 
 	storage := postgres.NewStorage(db)
 	if storage == nil {
@@ -86,14 +90,13 @@ func TestNewStorage(t *testing.T) {
 		Title:         "Test",
 		Body:          "Test",
 		BodyEmbedding: pgvector.NewVector(e),
-		Model_name:    "Test",
+		ModelName:     "Test",
 	})
 
 	if err != nil {
 		t.Fatalf("error saving essay: %v", err)
 	}
 
-	// test if the essay was saved
 	var count int
 	err = db.Get(&count, "SELECT COUNT(*) FROM essays")
 
