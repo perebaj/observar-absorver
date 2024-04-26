@@ -62,7 +62,7 @@ func main() {
 		}
 	}
 
-	var parsedEssaysResult marinho.Essays
+	var parsedEssaysResult marinho.ScraperEssays
 	for _, rawEssay := range rawEssays {
 		slog.Info("parsing", "url", rawEssay.URL)
 		parsedEssays, err := marinho.ParseHTML2Essay(rawEssay.HTML)

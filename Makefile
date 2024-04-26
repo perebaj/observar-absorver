@@ -23,9 +23,19 @@ dev/stop: ## Stop the development server
 .PHONY: integration-test
 integration-test: ## Run integration tests
 	@echo "Running integration tests..."
-	@go test -v ./...
+	if [ -n "$(testcase)" ]; then \
+		go test ./... -timeout 5s -v -run="^$(testcase)$$" ; \
+	else \
+		go test ./... -timeout 5s; \
+	fi
 
 .PHONY: lint
 lint: ## Run linter
 	@echo "Running linter..."
 	@go run github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION) run -v
+
+## Enrich the chunk of text with the GPT model (create embeddings over it)
+.PHONY: run/gpt
+run/gpt:
+	@echo "Running embedding example..."
+	@go run cmd/gpt/main.go

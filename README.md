@@ -12,3 +12,10 @@ Services are components of code that have specific functions. Between them, we h
 
 - Scraper: This service is responsible for scraping the data from the website of Eduardo Marinho.
 - GPT: This service is responsible for generating embeddings upon the text data.
+- Snippets: This service is responsible for generating snippets of text from the embeddings. (Split in smaller parts)
+
+# Environment Variables
+
+**Obligatory:**
+
+- OPENAI_API_KEY: The API key for the OpenAI service.

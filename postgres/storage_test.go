@@ -3,6 +3,7 @@ package postgres_test
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"net/url"
 	"os"
@@ -11,6 +12,7 @@ import (
 	"time"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/perebaj/marinho"
 	"github.com/perebaj/marinho/postgres"
 	"github.com/pgvector/pgvector-go"
 )
@@ -87,10 +89,14 @@ func TestNewStorage(t *testing.T) {
 
 	e := make([]float32, 1536)
 	err := storage.SaveEssay(postgres.Essay{
-		Title:         "Test",
-		Body:          "Test",
-		BodyEmbedding: pgvector.NewVector(e),
-		ModelName:     "Test",
+		ID:        "1",
+		Title:     "title",
+		URL:       "url",
+		Content:   "content",
+		Date:      "date",
+		Embedding: pgvector.NewVector(e),
+		ModelName: "model",
+		Dimension: 1536,
 	})
 
 	if err != nil {
@@ -106,5 +112,77 @@ func TestNewStorage(t *testing.T) {
 
 	if count != 1 {
 		t.Fatalf("expected 1 essay, got %d", count)
+	}
+}
+
+func TestSaveEssay(t *testing.T) {
+	db := OpenDB(t)
+
+	storage := postgres.NewStorage(db)
+	if storage == nil {
+		t.Fatal("storage is nil")
+	}
+
+	// load embeddings from a file
+	f, err := os.Open("embeddingessays.json")
+	if err != nil {
+		t.Fatalf("error opening embeddings file: %v", err)
+	}
+
+	defer func() {
+		_ = f.Close()
+	}()
+
+	var e []marinho.Essay
+	err = json.NewDecoder(f).Decode(&e)
+	if err != nil {
+		t.Fatalf("error decoding embeddings: %v", err)
+	}
+
+	for _, v := range e {
+		err = storage.SaveEssay(postgres.Essay{
+			ID:        v.ID,
+			Title:     v.Title,
+			URL:       v.URL,
+			Content:   v.Content,
+			Date:      v.Date,
+			Embedding: pgvector.NewVector(v.Embedding),
+			ModelName: string(v.ModelName),
+			Dimension: int(v.Dimension),
+		})
+
+		if err != nil {
+			t.Fatalf("error saving essay: %v", err)
+		}
+	}
+
+	var got int
+	err = db.Get(&got, "SELECT COUNT(*) FROM essays")
+
+	if err != nil {
+		t.Fatalf("error counting essays: %v", err)
+	}
+
+	if got != len(e) {
+		t.Fatalf("expected %d essays, got %d", len(e), got)
+	}
+
+	f, err = os.Open("query_input.json")
+	if err != nil {
+		t.Fatalf("error opening query_input file: %v", err)
+	}
+	var embeddingEssay marinho.EmbeddingEssay
+	err = json.NewDecoder(f).Decode(&embeddingEssay)
+	if err != nil {
+		t.Fatalf("error decoding query_input: %v", err)
+	}
+	var resp []postgres.EssayResponse
+	err = db.Select(&resp, "SELECT id, title, url, content, date, 1 - (embedding <=> $1) as cosine_similarity FROM essays ORDER BY cosine_similarity DESC", pgvector.NewVector(embeddingEssay.Embedding))
+	if err != nil {
+		t.Fatalf("error selecting essays: %v", err)
+	}
+
+	for _, v := range resp {
+		t.Log(v.CosineSimilarity)
 	}
 }

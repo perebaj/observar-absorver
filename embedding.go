@@ -22,15 +22,27 @@ const (
 	EmbeddingDimension1536 EmbeddingDimension = 1536
 )
 
+// Essay represents all the information about an essay including the embedding
+type Essay struct {
+	// ID is a key formed by the title and the chunk number. ex: essay-title-0, essay-title-1
+	ID      string `json:"id"`
+	Title   string `json:"title"`
+	URL     string `json:"url"`
+	Content string `json:"content"`
+	Date    string `json:"date"`
+	EmbeddingEssay
+}
+
 // EmbeddingEssay is a struct that contains the embedding of an essay and some metadata about the model and the dimension that generated the embedding
 type EmbeddingEssay struct {
-	Embedding openai.Embedding
-	Model     openai.EmbeddingModel
-	Dimension EmbeddingDimension
+	Text      string                `json:"text"`
+	Embedding []float32             `json:"embedding"`
+	ModelName openai.EmbeddingModel `json:"model_name"`
+	Dimension EmbeddingDimension    `json:"dimension"`
 }
 
 // Essay2Embedding converts an essay to an embedding
-func Essay2Embedding(essay string) EmbeddingEssay {
+func Essay2Embedding(text string) EmbeddingEssay {
 	cfg := Config{
 		OpenAIKey: os.Getenv("OPENAI_KEY"),
 	}
@@ -44,7 +56,7 @@ func Essay2Embedding(essay string) EmbeddingEssay {
 
 	queryReq := openai.EmbeddingRequest{
 		Model:          openai.SmallEmbedding3,
-		Input:          []string{essay},
+		Input:          []string{text},
 		EncodingFormat: openai.EmbeddingEncodingFormatBase64,
 	}
 
@@ -53,12 +65,11 @@ func Essay2Embedding(essay string) EmbeddingEssay {
 		slog.Error("error embedding", "error", err)
 		return EmbeddingEssay{}
 	}
-
 	e := EmbeddingEssay{
-		Embedding: resp.Data[0],
-		Model:     resp.Model,
+		Text:      text,
+		Embedding: resp.Data[0].Embedding,
+		ModelName: resp.Model,
 		Dimension: EmbeddingDimension1536,
 	}
-
 	return e
 }

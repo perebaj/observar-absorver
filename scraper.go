@@ -9,16 +9,16 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
-// Essay is a struct that contains the content of the essay blog post
-type Essay struct {
+// ScraperEssay is a struct that contains the content of the essay blog post
+type ScraperEssay struct {
 	Title   string
 	Content string
 	Date    string
 	URL     string
 }
 
-// Essays is a collection of Essay
-type Essays []Essay
+// ScraperEssays is a collection of Essay
+type ScraperEssays []ScraperEssay
 
 // RawEssay is a struct that contains the content of the html page
 type RawEssay struct {
@@ -32,27 +32,30 @@ type RawEssays []RawEssay
 const seedURL = "https://observareabsorver.blogspot.com/"
 
 // ParseHTML2Essay parses the raw html and returns the essays
-func ParseHTML2Essay(rawHTML string) (Essays, error) {
+func ParseHTML2Essay(rawHTML string) (ScraperEssays, error) {
 	//convert the raw html to a goquery document
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(rawHTML))
 	if err != nil {
 		return nil, fmt.Errorf("error parsing the html body: %v", err)
 	}
 
-	var essays Essays
+	var essays ScraperEssays
 	doc.Find("div.date-outer").Each(func(_ int, s *goquery.Selection) {
 		dateString := s.Find("h2 > span").Text()
 		title := s.Find("h3").Text()
 		url, _ := s.Find("h3 > a").Attr("href")
 		// any type of element that has text
 		content := s.Text()
-		essay := Essay{
+		essay := ScraperEssay{
 			Title:   title,
 			URL:     url,
 			Date:    dateString,
 			Content: content,
 		}
-		essays = append(essays, essay)
+		// if the title or the url is empty, we don't want to append it the final result
+		if essay.Title != "" || essay.URL != "" {
+			essays = append(essays, essay)
+		}
 	})
 
 	return essays, nil
@@ -68,7 +71,7 @@ func FetchPageHTML() (RawEssays, error) {
 		if err != nil {
 			return nil, fmt.Errorf("error fetching next link: %v", err)
 		}
-		func () {
+		func() {
 			_ = res.Body.Close()
 		}()
 		doc, err := goquery.NewDocumentFromReader(res.Body)
